@@ -3,6 +3,7 @@ package main
 import (
 	"io"
 	"os"
+	"strings"
 	"testing"
 )
 
@@ -55,7 +56,36 @@ func Test_prompt(t *testing.T) {
 
 	// perform our tests
 	if string(out) != "-> " {
-		t.Errorf("incorrect prompt: expected -> but got %s", string(out))
+		t.Errorf("incorrect prompt: expected '-> ' but got %s", string(out))
+	}
+
+}
+
+func Test_intro(t *testing.T) {
+	//  save a copy of os.Stdout
+	oldOut := os.Stdout
+
+	// create a read and write pipe
+	r, w, _ := os.Pipe()
+
+	// set os.Stdout to our write pipe, so when we call prompt,
+	// the result will be on the reader of the pipe, in our case`r`
+	os.Stdout = w
+	intro()
+
+	// close our writer
+	_ = w.Close()
+
+	// reset os.Stdout to what it was before
+	os.Stdout = oldOut
+
+	// read the output of prompt() from the read pipe
+	out, _ := io.ReadAll(r)
+
+	// perform our tests
+	expectedText := "Enter a whole number, and we'll tell you if it is a prime number or not. Enter q to quit."
+	if !strings.Contains(string(out), expectedText) {
+		t.Errorf("incorrect prompt: expected '%s' but got %s", expectedText, string(out))
 	}
 
 }
