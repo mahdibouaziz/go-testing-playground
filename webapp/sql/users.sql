@@ -88,6 +88,7 @@ COPY public.user_images (id, user_id, file_name, created_at, updated_at) FROM st
 --
 -- Data for Name: users; Type: TABLE DATA; Schema: public; Owner: -
 --
+-- hash for the 'secret' world
 
 COPY public.users (id, first_name, last_name, email, password, is_admin, created_at, updated_at) FROM stdin;
 1	Admin	User	admin@example.com	$2a$14$ajq8Q7fbtFRQvXpdCq7Jcuy.Rx1h/L4J60Otx.gyNLbAYctGMJ9tK	1	2022-08-19 00:00:00	2022-08-19 00:00:00
