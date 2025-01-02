@@ -1,8 +1,11 @@
 package main
 
 import (
+	"context"
+	"io"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 )
 
@@ -22,8 +25,6 @@ func Test_application_handlers(t *testing.T) {
 	ts := httptest.NewTLSServer(routes)
 	defer ts.Close()
 
-	pathToTemplates = "./../../templates/"
-
 	for _, e := range theTests {
 		resp, err := ts.Client().Get(ts.URL + e.url)
 		if err != nil {
@@ -35,4 +36,69 @@ func Test_application_handlers(t *testing.T) {
 			t.Errorf("for %s: expected status %d, but got %d", e.name, e.expectedStatusCode, resp.StatusCode)
 		}
 	}
+}
+
+func TestAppHome(t *testing.T) {
+	var tests = []struct {
+		name         string
+		putInSession string
+		expectedHTML string
+	}{
+		{name: "first visit", putInSession: "", expectedHTML: "<small>From Session"},
+		{name: "second visit", putInSession: "hello, from session", expectedHTML: "<small>From Session hello, from session"},
+	}
+
+	for _, e := range tests {
+		// create a request
+		req, _ := http.NewRequest("GET", "/", nil)
+		req = addContextAndSessionToRequest(req, app)
+
+		// Clean the session
+		_ = app.Session.Destroy(req.Context())
+
+		if len(e.putInSession) > 0 {
+			app.Session.Put(req.Context(), "test", e.putInSession)
+		}
+
+		rr := httptest.NewRecorder()
+
+		handler := http.HandlerFunc(app.Home)
+
+		handler.ServeHTTP(rr, req)
+
+		// check status code
+		if rr.Code != http.StatusOK {
+			t.Errorf("test app home returned wrong status code; expected 200 but got %d", rr.Code)
+		}
+
+		body, _ := io.ReadAll(rr.Body)
+		if !strings.Contains(string(body), e.expectedHTML) {
+			t.Errorf("%s did not find correct '%s' in html", e.name, e.expectedHTML)
+		}
+	}
+}
+
+func TestApp_renderWithBadTemplate(t *testing.T) {
+	// set templatePath to a location with a bad template
+	pathToTemplates = "./testdata/"
+
+	req, _ := http.NewRequest("GET", "/", nil)
+	req = addContextAndSessionToRequest(req, app)
+	rr := httptest.NewRecorder()
+
+	err := app.render(rr, req, "bad.page.gohtml", &TemplateData{})
+	if err == nil {
+		t.Error("Expected error from bad template but did not get one")
+	}
+}
+
+func getCtx(req *http.Request) context.Context {
+	ctx := context.WithValue(req.Context(), contextUserKey, "unknown")
+	return ctx
+}
+
+func addContextAndSessionToRequest(req *http.Request, app application) *http.Request {
+	req = req.WithContext(getCtx(req))
+	ctx, _ := app.Session.Load(req.Context(), req.Header.Get("X-Session"))
+	return req.WithContext(ctx)
 }
