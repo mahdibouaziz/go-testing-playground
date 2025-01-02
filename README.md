@@ -12,7 +12,7 @@
 
 ### Run one specific test 
 
-`go test -ren <TEST FUNC NAME>`
+`go test -run <TEST FUNC NAME>`
 
 ### Check the testing coverage: 
 
