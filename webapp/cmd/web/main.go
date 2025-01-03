@@ -7,13 +7,14 @@ import (
 
 	"github.com/alexedwards/scs/v2"
 	"github.com/mahdibouaziz/go-testing-playground/webapp/pkg/data"
-	"github.com/mahdibouaziz/go-testing-playground/webapp/pkg/db"
+	"github.com/mahdibouaziz/go-testing-playground/webapp/pkg/repository"
+	"github.com/mahdibouaziz/go-testing-playground/webapp/pkg/repository/dbrepo"
 )
 
 type application struct {
 	Session *scs.SessionManager
 	DSN     string
-	DB      db.PostgresConn
+	DB      repository.DatabaseRepo
 }
 
 func main() {
@@ -31,7 +32,7 @@ func main() {
 		log.Fatalf("Unable to connect to the database: %v", err)
 	}
 	defer conn.Close()
-	app.DB = db.PostgresConn{DB: conn}
+	app.DB = &dbrepo.PostgresDBRepo{DB: conn}
 
 	// print out a message
 	log.Println("Starting server on port 8080")
