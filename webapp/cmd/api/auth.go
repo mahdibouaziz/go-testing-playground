@@ -66,7 +66,7 @@ func (app *application) getTokenFromHeaderAndVerify(w http.ResponseWriter, r *ht
 	})
 	// The error catches expired token as well
 	if err != nil {
-		if strings.HasPrefix(err.Error(), "token is expired by") {
+		if strings.Contains(err.Error(), "token is expired") {
 			return "", nil, errors.New("expired token")
 		}
 		return "", nil, err
